@@ -10,16 +10,28 @@ const Issue = require('../models/Issue');
  */
 const getDashboard = async (req, res, next) => {
   try {
+    // Build filters based on user role
+    let filter = {};
+    
+    if (req.user.role === 'Admin') {
+      // Admins see only their own data
+      filter = { adminId: req.user.id };
+    } else if (req.user.role === 'Manager') {
+      // Managers see data from their admin only
+      filter = { adminId: req.user.adminId };
+    }
+
     // Get basic counts
     const [societiesCount, tasksCount, assetsCount, issuesCount] = await Promise.all([
-      Society.countDocuments({ isActive: true }),
-      Task.countDocuments(),
-      Asset.countDocuments(),
-      Issue.countDocuments()
+      Society.countDocuments({ ...filter, isActive: true }),
+      Task.countDocuments({ ...filter, isActive: true }),
+      Asset.countDocuments({ ...filter, isActive: true }),
+      Issue.countDocuments(req.user.role === 'Admin' ? { targetAdminId: req.user.id } : {})
     ]);
 
     // Get tasks by status
     const tasksByStatus = await Task.aggregate([
+      { $match: { ...filter, isActive: true } },
       {
         $group: {
           _id: '$status',
@@ -30,6 +42,7 @@ const getDashboard = async (req, res, next) => {
 
     // Get assets by category
     const assetsByCategory = await Asset.aggregate([
+      { $match: { ...filter, isActive: true } },
       {
         $group: {
           _id: '$category',
@@ -39,7 +52,9 @@ const getDashboard = async (req, res, next) => {
     ]);
 
     // Get issues by status
+    const issueFilter = req.user.role === 'Admin' ? { targetAdminId: req.user.id } : {};
     const issuesByStatus = await Issue.aggregate([
+      { $match: issueFilter },
       {
         $group: {
           _id: '$status',
@@ -50,18 +65,23 @@ const getDashboard = async (req, res, next) => {
 
     // Get pending issues count
     const pendingIssuesCount = await Issue.countDocuments({ 
+      ...issueFilter,
       status: { $in: ['Submitted', 'UnderReview'] } 
     });
 
     // Get recent tasks
-    const recentTasks = await Task.find()
+    const recentTasks = await Task.find({ ...filter, isActive: true })
       .populate('societyId', 'name')
       .sort({ createdAt: -1 })
       .limit(5)
       .select('title description status societyId createdAt');
 
     // Count completed tasks
-    const completedTasksCount = await Task.countDocuments({ status: 'completed' });
+    const completedTasksCount = await Task.countDocuments({ 
+      ...filter, 
+      isActive: true,
+      status: 'Completed' 
+    });
 
     // Format data for charts
     const taskStatusData = tasksByStatus.map(item => ({
