@@ -1,108 +1,229 @@
-# Property Maintenance Platform MVP Backend
+# Maintainly Backend
 
-A comprehensive property maintenance management system built with Node.js, Express.js, MongoDB, and Supabase Storage.
+**A professional property maintenance management API built with Node.js, Express.js, MongoDB, and Supabase Storage.**
 
-## 🏗️ Architecture Overview
+This README serves as both an onboarding guide for backend engineers and comprehensive API documentation for the Maintainly platform.
 
-This is a traditional monolithic Express.js application with the following structure:
-
-- **Database**: MongoDB with Mongoose ODM
-- **Storage**: Supabase for photo verification uploads
-- **Authentication**: JWT-based authentication
-- **Authorization**: Role-based access control (Admin/Manager)
-- **Validation**: Express-validator for input validation
-- **Security**: Helmet, CORS, and bcryptjs for password hashing
-
-## 📁 Project Structure
-
-```
-property-maintenance-platform/
-├── config/
-│   └── database.js              # MongoDB connection configuration
-├── controllers/
-│   ├── authController.js        # Authentication logic
-│   ├── societiesController.js   # Society management
-│   ├── assetLibraryController.js # Asset library management
-│   ├── assetsController.js      # Asset management
-│   └── tasksController.js       # Task management & photo verification
-├── middleware/
-│   ├── authMiddleware.js        # JWT authentication middleware
-│   ├── roleMiddleware.js        # Role-based authorization
-│   └── errorHandler.js          # Global error handling
-├── models/
-│   ├── User.js                  # User model (Admin/Manager)
-│   ├── Society.js               # Property/Society model
-│   ├── AssetLibraryItem.js      # Asset type definitions
-│   ├── Asset.js                 # Individual assets
-│   └── Task.js                  # Maintenance tasks
-├── routes/
-│   ├── auth.js                  # Authentication routes
-│   ├── societies.js             # Society CRUD routes
-│   ├── assetLibrary.js          # Asset library CRUD routes
-│   ├── assets.js                # Asset CRUD routes
-│   └── tasks.js                 # Task management & verification routes
-├── services/
-│   └── supabaseStorageService.js # Supabase storage integration
-├── .env.example                 # Environment variables template
-├── .gitignore                   # Git ignore rules
-├── index.js                     # Application entry point
-└── package.json                 # Dependencies and scripts
-```
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js (v16 or higher)
-- MongoDB (local or MongoDB Atlas)
-- Supabase account and project
+- Node.js v16+ and npm
+- MongoDB (local or Atlas)
+- Supabase project (for storage)
 
 ### Installation
 
-1. **Clone and install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+# 1. Navigate to backend directory
+cd backend
 
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` file with your configuration:
-   ```env
-   NODE_ENV=development
-   PORT=3000
-   JWT_SECRET=your-super-secret-jwt-key
-   MONGODB_URI=mongodb://localhost:27017/property-maintenance
-   SUPABASE_URL=https://your-project-ref.supabase.co
-   SUPABASE_ANON_KEY=your-supabase-anon-key
-   VERIFICATION_PHOTOS_BUCKET=verification-photos
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Set up Supabase Storage:**
-   - Create a new bucket named `verification-photos` in your Supabase project
-   - Set the bucket to public or configure appropriate policies
-   - Update the bucket name in your `.env` file if different
+# 3. Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration (see Environment Variables section)
 
-4. **Start the server:**
-   ```bash
-   # Development with auto-reload
-   npm run dev
-   
-   # Production
-   npm start
-   ```
+# 4. Start development server
+npm run dev
 
-5. **Verify installation:**
-   Visit `http://localhost:3000/health` to confirm the API is running.
+# 5. Verify installation
+# Visit http://localhost:3000/health
+```
 
-## 👤 Default Admin Account
-
-On first startup, a default admin account is created:
+### Default Admin Account
+On first startup, a default admin is created:
 - **Email**: `admin@maintainly.com`
 - **Password**: `admin123`
-- **⚠️ Important**: Change this password immediately after first login
+- ⚠️ **Change immediately after first login**
+
+---
+
+## 🏗️ Architecture Overview
+
+**Type**: Monolithic Express.js REST API
+
+**Tech Stack**:
+- **Runtime**: Node.js (v16+)
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Storage**: Supabase Storage (verification photos)
+- **Authentication**: JWT (JSON Web Tokens)
+- **Authorization**: Role-based access control (Admin/Manager)
+- **Validation**: express-validator
+- **Security**: Helmet, CORS, bcryptjs password hashing
+
+**Core Responsibilities**:
+- User authentication & authorization
+- Society (property) management
+- Asset library & asset management
+- Maintenance task lifecycle
+- Photo verification workflow
+- Signed URL generation for uploads
+
+---
+
+## 📁 Project Structure
+
+```
+backend/
+├── config/
+│   └── database.js              # MongoDB connection & configuration
+├── controllers/
+│   ├── authController.js        # Authentication & user management
+│   ├── societiesController.js   # Society CRUD operations
+│   ├── assetLibraryController.js # Asset library management
+│   ├── assetsController.js      # Asset CRUD operations
+│   ├── tasksController.js       # Task management & verification
+│   ├── dashboardController.js   # Dashboard statistics
+│   ├── issuesController.js      # Issue tracking
+│   ├── managersController.js    # Manager operations
+│   └── adminLinksController.js  # Admin link management
+├── middleware/
+│   ├── authMiddleware.js        # JWT authentication
+│   ├── roleMiddleware.js        # Role-based authorization
+│   ├── errorHandler.js          # Global error handling
+│   ├── cache.js                 # Caching middleware
+│   └── speedInsights.js         # Performance monitoring
+├── models/
+│   ├── User.js                  # User model (Admin/Manager roles)
+│   ├── Society.js               # Property/Society model
+│   ├── AssetLibraryItem.js      # Asset type definitions
+│   ├── Asset.js                 # Individual asset instances
+│   ├── Task.js                  # Maintenance task model
+│   └── Issue.js                 # Issue tracking model
+├── routes/
+│   ├── auth.js                  # Authentication endpoints
+│   ├── societies.js             # Society management routes
+│   ├── assetLibrary.js          # Asset library routes
+│   ├── assets.js                # Asset management routes
+│   ├── tasks.js                 # Task & verification routes
+│   ├── dashboard.js             # Dashboard routes
+│   ├── issues.js                # Issue routes
+│   ├── managers.js              # Manager routes
+│   └── adminLinks.js            # Admin link routes
+├── services/
+│   └── supabaseStorageService.js # Signed URL generation & storage
+├── scripts/
+│   └── seedData.js              # Database seeding utilities
+├── index.js                     # Application entry point
+├── package.json                 # Dependencies & scripts
+├── vercel.json                  # Vercel deployment config
+└── .env.example                 # Environment variables template
+```
+
+**What to look at first** (for new engineers):
+1. **Entry point**: `index.js` — Express setup, middleware, routes
+2. **Database**: `config/database.js` — MongoDB connection
+3. **Auth flow**: `middleware/authMiddleware.js` + `controllers/authController.js`
+4. **Task lifecycle**: `controllers/tasksController.js` + `models/Task.js`
+5. **Storage**: `services/supabaseStorageService.js` — signed upload URLs
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file with these variables:
+
+```env
+# Environment
+NODE_ENV=development              # development | production
+
+# Server
+PORT=3000                         # HTTP port
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/maintainly
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# Supabase Storage
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+VERIFICATION_PHOTOS_BUCKET=verification-photos
+```
+
+**Production notes**:
+- Use a strong, randomly generated `JWT_SECRET`
+- Use MongoDB Atlas or managed MongoDB with proper backups
+- Configure Supabase bucket policies (public or signed URLs)
+- Set appropriate CORS origins in `index.js`
+
+### Supabase Storage Setup
+1. Create a bucket named `verification-photos` in your Supabase project
+2. Set bucket to public OR configure RLS policies for signed URLs
+3. Update `VERIFICATION_PHOTOS_BUCKET` if using a different name
+
+---
+
+## 💻 Development Workflow
+
+### Available Scripts
+```bash
+npm start           # Start production server
+npm run dev         # Start dev server with nodemon auto-reload
+npm test            # Run tests (TODO: not implemented yet)
+```
+
+### Common Commands
+```bash
+# Generate a secure JWT secret
+node generate-jwt-secret.js
+
+# Seed database with sample data
+node reset-and-seed.js
+
+# Import Excel data
+node import-excel-data.js
+```
+
+### Branching Strategy
+- Create feature branches: `feature/<description>`
+- Bug fixes: `fix/<description>`
+- Open PRs with clear descriptions and testing steps
+
+### Code Guidelines
+- Follow existing style and folder structure
+- Add input validation with `express-validator`
+- Include error handling for all async operations
+- Test auth/role requirements for protected endpoints
+- Document complex business logic with comments
+
+---
+
+## 🎯 Data Models & Relationships
+
+### User Roles
+- **Admin**: Full system access — manages properties, creates tasks, verifies work
+- **Manager**: Assigned to tasks — executes work, uploads verification photos
+
+### Key Relationships
+```
+Admin → owns → Societies (properties)
+Admin → creates → Asset Library Items (asset types)
+Society + Asset Library Item → Asset instances
+Assets → have → Maintenance Tasks
+Tasks → assigned to → Managers
+Tasks → contain → Verification Photos
+```
+
+### Task Status Flow
+```
+Pending
+   ↓
+InProgress (Manager starts work)
+   ↓
+PendingVerification (Manager submits photo)
+   ↓                          ↓
+Completed (Admin approves)   RequiresAttention (Admin rejects)
+                                   ↓
+                             InProgress (Manager reworks)
+```
+
+---
 
 ## 📋 API Documentation
 
@@ -112,10 +233,12 @@ http://localhost:3000/api
 ```
 
 ### Authentication
-All protected endpoints require a Bearer token in the Authorization header:
+Protected endpoints require a Bearer token:
 ```
 Authorization: Bearer <your-jwt-token>
 ```
+
+Obtain token via `POST /api/auth/login`
 
 ### Core Endpoints
 
@@ -125,9 +248,34 @@ Authorization: Bearer <your-jwt-token>
 |--------|----------|-------------|---------|
 | POST | `/login` | User login | Public |
 | POST | `/register-manager` | Register new manager | Admin |
-| GET | `/me` | Get user profile | Private |
-| PUT | `/profile` | Update profile | Private |
+| GET | `/me` | Get current user profile | Private |
+| PUT | `/profile` | Update user profile | Private |
 | PUT | `/change-password` | Change password | Private |
+
+**Example: Login**
+```bash
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@maintainly.com",
+  "password": "admin123"
+}
+
+# Response:
+{
+  "status": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "...",
+      "email": "admin@maintainly.com",
+      "role": "admin",
+      "name": "Admin User"
+    }
+  }
+}
+```
 
 #### Societies (`/api/societies`)
 
@@ -298,36 +446,130 @@ The application will automatically:
 
 ## 🚀 Production Deployment
 
-1. **Set environment to production:**
-   ```env
-   NODE_ENV=production
-   ```
+### Vercel Deployment
+This project includes `vercel.json` for serverless deployment.
 
-2. **Use production MongoDB URI:**
-   ```env
-   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/property-maintenance
-   ```
+**Environment Variables** (set in Vercel dashboard):
+- `NODE_ENV=production`
+- `MONGODB_URI=<your-atlas-uri>`
+- `JWT_SECRET=<strong-secret>`
+- `SUPABASE_URL=<your-supabase-url>`
+- `SUPABASE_ANON_KEY=<your-anon-key>`
+- `VERIFICATION_PHOTOS_BUCKET=verification-photos`
 
-3. **Configure CORS for your domain:**
-   Update CORS configuration in `index.js`
+**Deploy:**
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-4. **Use strong JWT secret:**
-   Generate a strong, unique JWT_SECRET
+# Deploy
+vercel --prod
+```
 
-5. **Set up proper error monitoring and logging**
+### Traditional Server Deployment
 
-## 📝 TODO / Future Enhancements
+```bash
+# 1. Set environment to production
+export NODE_ENV=production
 
-- [ ] Add unit and integration tests
-- [ ] Implement rate limiting
-- [ ] Add API documentation with Swagger
-- [ ] Add logging with Winston
-- [ ] Implement caching with Redis
-- [ ] Add email notifications
-- [ ] Add task scheduling with cron jobs
-- [ ] Implement real-time updates with Socket.io
-- [ ] Add file upload size limits and validation
-- [ ] Add audit logging for admin actions
+# 2. Install production dependencies only
+npm ci --production
+
+# 3. Start with PM2 (process manager)
+npm install -g pm2
+pm2 start index.js --name maintainly-backend
+
+# 4. Configure nginx reverse proxy (optional)
+# Point nginx to http://localhost:3000
+```
+
+### Docker Deployment (optional)
+
+```dockerfile
+FROM node:16-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY . .
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+---
+
+## 🧪 Testing
+
+**Current Status**: Tests not yet implemented (see TODO below)
+
+**Recommended Test Structure**:
+```
+backend/tests/
+├── unit/
+│   ├── models/
+│   ├── controllers/
+│   └── services/
+├── integration/
+│   ├── auth.test.js
+│   ├── tasks.test.js
+│   └── photo-verification.test.js
+└── setup.js
+```
+
+**Test Stack Recommendations**:
+- Framework: Jest or Mocha
+- Assertions: Chai or Jest matchers
+- HTTP testing: Supertest
+- Mocking: Sinon or Jest mocks
+- Test DB: MongoDB Memory Server
+
+---
+
+## 🎓 Onboarding Checklist
+
+For new backend engineers joining the team:
+
+- [ ] **Environment Setup**: Clone repo, install Node.js 16+, install dependencies
+- [ ] **Local Development**: Set up `.env`, start MongoDB, run `npm run dev`
+- [ ] **Health Check**: Visit `http://localhost:3000/health` and confirm response
+- [ ] **Database**: Connect to MongoDB, inspect collections, review schemas
+- [ ] **Default Admin**: Log in with default admin credentials via `/api/auth/login`
+- [ ] **API Exploration**: Use Postman/Thunder Client to test key endpoints
+- [ ] **Task Workflow**: Create a task, assign to manager, walk through full verification flow
+- [ ] **Code Review**: Read `index.js`, `authMiddleware.js`, `tasksController.js`
+- [ ] **Storage**: Test Supabase signed URL generation and file upload
+- [ ] **Documentation**: Review this README and other docs in `backend/` folder
+
+**Recommended first tasks**:
+1. Fix a small bug or add input validation
+2. Add a new endpoint with auth/role checks
+3. Write unit tests for a controller or service
+4. Improve error handling in a specific flow
+
+---
+
+## 📚 Additional Documentation
+
+- `DATA_MAPPING_GUIDE.md` — Database schema and data relationships
+- `SPEED_INSIGHTS_SETUP.md` — Performance monitoring setup
+- `vercel.json` — Vercel deployment configuration
+- `.env.example` — Complete environment variable reference
+
+---
+
+## 🛠️ TODO / Future Enhancements
+
+- [ ] **Testing**: Add unit and integration tests with Jest
+- [ ] **Rate Limiting**: Implement with express-rate-limit
+- [ ] **API Docs**: Generate with Swagger/OpenAPI
+- [ ] **Logging**: Add structured logging with Winston or Pino
+- [ ] **Caching**: Implement Redis caching for frequent queries
+- [ ] **Notifications**: Email/SMS notifications for task updates
+- [ ] **Scheduling**: Cron jobs for recurring tasks and reminders
+- [ ] **Real-time**: WebSocket support with Socket.io
+- [ ] **File Validation**: Size limits, type checking, virus scanning
+- [ ] **Audit Logs**: Track all admin actions with timestamps
+- [ ] **Metrics**: Prometheus metrics for monitoring
+- [ ] **GraphQL**: Consider GraphQL API alongside REST
 
 ## 🤝 Contributing
 
@@ -337,19 +579,35 @@ The application will automatically:
 4. Add tests (when available)
 5. Submit a pull request
 
-## 📄 License
+**Commit Message Format**:
+```
+<type>(<scope>): <subject>
 
-This project is licensed under the ISC License.
-
-## 🆘 Support
-
-For questions and support:
-1. Check the API documentation above
-2. Review the error messages in console logs
-3. Ensure all environment variables are properly set
-4. Verify MongoDB and Supabase connections
+Examples:
+feat(tasks): add bulk task assignment endpoint
+fix(auth): resolve token expiry edge case
+docs(readme): update deployment instructions
+```
 
 ---
 
-**Happy Coding! 🎉**#   m a i n t a i n l y - b a c k e n d  
+## 📞 Support & Contact
+
+**Repository**: [maintainly-backend](https://github.com/dbajaj123/maintainly-backend)
+
+**Key Entry Points**:
+- Application: `index.js`
+- Database: `config/database.js`
+- Auth: `middleware/authMiddleware.js`
+
+**For Issues**:
+1. Check console logs and error messages
+2. Verify environment variables are set correctly
+3. Confirm MongoDB and Supabase connections
+4. Review this README and related docs
+
+---
+
+**Built with ❤️ for the Maintainly Team**
+ 
  
