@@ -81,6 +81,9 @@ backend/
 │   ├── issuesController.js      # Issue tracking
 │   ├── managersController.js    # Manager operations
 │   └── adminLinksController.js  # Admin link management
+├── docs/
+│   ├── DATA_MAPPING_GUIDE.md    # Database schema & relationships
+│   └── SPEED_INSIGHTS_SETUP.md  # Performance monitoring setup
 ├── middleware/
 │   ├── authMiddleware.js        # JWT authentication
 │   ├── roleMiddleware.js        # Role-based authorization
@@ -104,14 +107,24 @@ backend/
 │   ├── issues.js                # Issue routes
 │   ├── managers.js              # Manager routes
 │   └── adminLinks.js            # Admin link routes
+├── scripts/
+│   ├── data-import/
+│   │   ├── import-excel-data.js # Import data from Excel files
+│   │   ├── import-your-data.js  # Custom data import script
+│   │   └── imported-data.json   # Sample imported data
+│   ├── utilities/
+│   │   ├── generate-jwt-secret.js # Generate secure JWT secrets
+│   │   └── generate-jwt.js      # Generate JWT tokens
+│   ├── reset-and-seed.js        # Reset DB and seed sample data
+│   ├── seed-database.js         # Database seeding
+│   └── seedData.js              # Seed data definitions
 ├── services/
 │   └── supabaseStorageService.js # Signed URL generation & storage
-├── scripts/
-│   └── seedData.js              # Database seeding utilities
 ├── index.js                     # Application entry point
 ├── package.json                 # Dependencies & scripts
 ├── vercel.json                  # Vercel deployment config
-└── .env.example                 # Environment variables template
+├── .env.example                 # Environment variables template
+└── README.md                    # This file
 ```
 
 **What to look at first** (for new engineers):
@@ -171,13 +184,13 @@ npm test            # Run tests (TODO: not implemented yet)
 ### Common Commands
 ```bash
 # Generate a secure JWT secret
-node generate-jwt-secret.js
+node scripts/utilities/generate-jwt-secret.js
 
 # Seed database with sample data
-node reset-and-seed.js
+node scripts/reset-and-seed.js
 
 # Import Excel data
-node import-excel-data.js
+node scripts/data-import/import-excel-data.js
 ```
 
 ### Branching Strategy
@@ -597,8 +610,8 @@ For new backend engineers joining the team:
 
 ## 📚 Additional Documentation
 
-- `DATA_MAPPING_GUIDE.md` — Database schema and data relationships
-- `SPEED_INSIGHTS_SETUP.md` — Performance monitoring setup
+- `docs/DATA_MAPPING_GUIDE.md` — Database schema and data relationships
+- `docs/SPEED_INSIGHTS_SETUP.md` — Performance monitoring setup
 - `vercel.json` — Vercel deployment configuration
 - `.env.example` — Complete environment variable reference
 
