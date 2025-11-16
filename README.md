@@ -246,7 +246,7 @@ Obtain token via `POST /api/auth/login`
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| POST | `/login` | User login | Public |
+| POST | `/login` | User login (returns JWT) | Public |
 | POST | `/register-manager` | Register new manager | Admin |
 | GET | `/me` | Get current user profile | Private |
 | PUT | `/profile` | Update user profile | Private |
@@ -285,23 +285,23 @@ Content-Type: application/json
 | GET | `/:id` | Get society by ID | Admin |
 | POST | `/` | Create new society | Admin |
 | PUT | `/:id` | Update society | Admin |
-| DELETE | `/:id` | Delete society (soft) | Admin |
+| DELETE | `/:id` | Soft delete society | Admin |
 
 #### Asset Library (`/api/asset-library`)
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| GET | `/` | Get all asset library items | Admin |
-| GET | `/:id` | Get asset library item by ID | Admin |
-| POST | `/` | Create new asset library item | Admin |
-| PUT | `/:id` | Update asset library item | Admin |
-| DELETE | `/:id` | Delete asset library item | Admin |
+| GET | `/` | Get all asset types | Admin |
+| GET | `/:id` | Get asset type by ID | Admin |
+| POST | `/` | Create asset type | Admin |
+| PUT | `/:id` | Update asset type | Admin |
+| DELETE | `/:id` | Delete asset type | Admin |
 
 #### Assets (`/api/assets`)
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| GET | `/` | Get all assets | Admin/Manager |
+| GET | `/` | Get all assets (filtered by role) | Admin/Manager |
 | GET | `/:id` | Get asset by ID | Admin/Manager |
 | POST | `/` | Create new asset | Admin |
 | PUT | `/:id` | Update asset | Admin |
@@ -311,93 +311,148 @@ Content-Type: application/json
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| GET | `/` | Get tasks | Admin/Manager* |
+| GET | `/` | Get tasks (managers see only assigned) | Admin/Manager* |
 | GET | `/:id` | Get task by ID | Admin/Manager* |
 | POST | `/` | Create new task | Admin |
-| PATCH | `/:id` | Update task | Admin |
+| PATCH | `/:id` | Update task details | Admin |
 | DELETE | `/:id` | Delete task | Admin |
-| POST | `/:id/start` | Start task | Admin/Manager* |
-| POST | `/:id/submit-for-verification` | Submit with photo | Manager* |
-| POST | `/:id/verify` | Approve/reject task | Admin |
-| POST | `/upload-url` | Get upload URL | Admin/Manager |
-| GET | `/dashboard/stats` | Get statistics | Admin/Manager* |
+| POST | `/:id/start` | Start task (change to InProgress) | Manager* |
+| POST | `/:id/submit-for-verification` | Submit photo for review | Manager* |
+| POST | `/:id/verify` | Approve or reject task | Admin |
+| POST | `/upload-url` | Get signed upload URL | Admin/Manager |
+| GET | `/dashboard/stats` | Get task statistics | Admin/Manager* |
 
-*Managers can only access tasks assigned to them
+*Managers can only access tasks assigned to them.
+
+#### Dashboard (`/api/dashboard`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/stats` | Get dashboard statistics | Admin/Manager |
+
+#### Issues (`/api/issues`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/` | Get all issues | Admin/Manager |
+| POST | `/` | Create new issue | Admin/Manager |
+| PUT | `/:id` | Update issue | Admin |
+| DELETE | `/:id` | Delete issue | Admin |
+
+#### Managers (`/api/managers`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/` | Get all managers | Admin |
+| POST | `/` | Create new manager | Admin |
+| PUT | `/:id` | Update manager | Admin |
+| DELETE | `/:id` | Delete manager | Admin |
+
+---
 
 ## 🔄 Task Lifecycle & Photo Verification
+
+### Task Status Flow
 
 The task workflow follows these states:
 
 1. **Pending** → Manager can start the task
-2. **InProgress** → Manager is working on the task  
+2. **InProgress** → Manager is working on the task
 3. **PendingVerification** → Manager submitted photo for admin review
 4. **Completed** → Admin approved the work
 5. **RequiresAttention** → Admin rejected, needs rework
 
 ### Photo Verification Workflow
 
-1. **Manager uploads photo:**
-   ```bash
-   # 1. Get signed upload URL
-   POST /api/tasks/upload-url
-   {
-     "fileName": "task-completion.jpg",
-     "fileType": "image/jpeg"
-   }
-   
-   # 2. Upload file directly to Supabase using returned uploadUrl
-   POST <uploadUrl from step 1>
-   Content-Type: image/jpeg
-   <binary file data>
-   
-   # 3. Submit task for verification with public URL
-   POST /api/tasks/:id/submit-for-verification
-   {
-     "photoUrl": "<publicUrl from step 1>",
-     "completionNotes": "Task completed successfully"
-   }
-   ```
+**Step 1: Manager requests upload URL**
+```bash
+POST /api/tasks/upload-url
+Authorization: Bearer <manager-token>
+Content-Type: application/json
 
-2. **Admin verifies:**
-   ```bash
-   POST /api/tasks/:id/verify
-   {
-     "action": "approve", // or "reject"
-     "verificationNotes": "Work looks good",
-     "rejectionReason": "Required only if action is reject"
-   }
-   ```
+{
+  "fileName": "task-completion-photo.jpg",
+  "fileType": "image/jpeg"
+}
 
-## 🎯 Data Models
-
-### User Roles
-- **Admin**: Manages properties, creates tasks, verifies completions
-- **Manager**: Assigned to tasks, uploads verification photos
-
-### Key Relationships
-- Admin → owns multiple Societies
-- Admin → creates Asset Library Items
-- Society + Asset Library Item → creates Assets  
-- Assets → have maintenance Tasks
-- Tasks → assigned to Managers
-- Tasks → contain verification photos
-
-### Task Status Flow
+# Response:
+{
+  "status": "success",
+  "data": {
+    "uploadUrl": "https://supabase.co/storage/v1/...",
+    "publicUrl": "https://supabase.co/storage/v1/object/public/..."
+  }
+}
 ```
-Pending → InProgress → PendingVerification → Completed
-                          ↓
-                    RequiresAttention
+
+**Step 2: Manager uploads file to Supabase**
+```bash
+PUT <uploadUrl from step 1>
+Content-Type: image/jpeg
+
+<binary file data>
 ```
+
+**Step 3: Manager submits task for verification**
+```bash
+POST /api/tasks/:taskId/submit-for-verification
+Authorization: Bearer <manager-token>
+Content-Type: application/json
+
+{
+  "photoUrl": "<publicUrl from step 1>",
+  "completionNotes": "Repaired elevator motor, tested all floors"
+}
+
+# Task status changes: InProgress → PendingVerification
+```
+
+**Step 4: Admin reviews and verifies**
+```bash
+POST /api/tasks/:taskId/verify
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+# Approve:
+{
+  "action": "approve",
+  "verificationNotes": "Work looks good, all tests passed"
+}
+
+# Or reject:
+{
+  "action": "reject",
+  "rejectionReason": "Photo does not show completed repair",
+  "verificationNotes": "Please retake photo showing the motor"
+}
+
+# Status changes: PendingVerification → Completed (or RequiresAttention)
+```
+
+---
 
 ## 🔒 Security Features
 
-- **JWT Authentication**: Secure token-based auth
-- **Role-based Authorization**: Admin/Manager permissions
-- **Input Validation**: Express-validator on all inputs
-- **Password Security**: bcryptjs hashing
-- **CORS Protection**: Configurable origin policies
-- **Helmet**: Security headers
-- **Resource Ownership**: Users only access their own data
+- **JWT Authentication**: Secure token-based auth with configurable expiry
+- **Role-based Authorization**: Middleware enforces Admin/Manager permissions
+- **Input Validation**: express-validator on all inputs
+- **Password Security**: bcryptjs with salt rounds
+- **CORS Protection**: Configurable allowed origins
+- **Helmet**: Security headers (XSS, noSniff, frameGuard)
+- **Resource Ownership**: Users only access their assigned data
+- **Soft Deletes**: Critical data preserved with `isDeleted` flag
+
+**Security Checklist for Production**:
+- [ ] Generate strong `JWT_SECRET` (min 32 characters)
+- [ ] Enable HTTPS/TLS
+- [ ] Configure CORS for production domains only
+- [ ] Set up rate limiting (TODO: not implemented)
+- [ ] Enable MongoDB authentication
+- [ ] Configure Supabase RLS policies
+- [ ] Set up error monitoring (Sentry, etc.)
+- [ ] Enable audit logging for admin actions
+
+---
 
 ## 📊 API Response Format
 
@@ -407,7 +462,7 @@ Pending → InProgress → PendingVerification → Completed
   "status": "success",
   "message": "Operation completed successfully",
   "data": {
-    // Response data here
+    // Response payload here
   }
 }
 ```
@@ -415,9 +470,9 @@ Pending → InProgress → PendingVerification → Completed
 ### Error Response
 ```json
 {
-  "status": "error", 
+  "status": "error",
   "message": "Error description",
-  "errors": [ // Optional validation errors
+  "errors": [  // Optional: validation errors
     {
       "field": "email",
       "message": "Invalid email format"
@@ -426,25 +481,18 @@ Pending → InProgress → PendingVerification → Completed
 }
 ```
 
-## 🛠️ Development
+### HTTP Status Codes
+- `200 OK` — Successful GET/PUT/PATCH
+- `201 Created` — Successful POST
+- `400 Bad Request` — Validation error
+- `401 Unauthorized` — Missing or invalid token
+- `403 Forbidden` — Insufficient permissions
+- `404 Not Found` — Resource not found
+- `500 Internal Server Error` — Server error
 
-### Available Scripts
-```bash
-npm start        # Start production server
-npm run dev      # Start development server with nodemon
-npm test         # Run tests (not implemented yet)
-```
+---
 
-### Environment Variables
-See `.env.example` for all required environment variables.
-
-### Database Setup
-The application will automatically:
-- Connect to MongoDB
-- Create database indexes
-- Create default admin user on first run
-
-## 🚀 Production Deployment
+## 🚀 Deployment
 
 ### Vercel Deployment
 This project includes `vercel.json` for serverless deployment.
@@ -483,7 +531,7 @@ pm2 start index.js --name maintainly-backend
 # Point nginx to http://localhost:3000
 ```
 
-### Docker Deployment (optional)
+### Docker Deployment
 
 ```dockerfile
 FROM node:16-alpine
@@ -571,13 +619,15 @@ For new backend engineers joining the team:
 - [ ] **Metrics**: Prometheus metrics for monitoring
 - [ ] **GraphQL**: Consider GraphQL API alongside REST
 
+---
+
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests (when available)
-5. Submit a pull request
+1. **Fork/branch** from `main`
+2. **Implement** feature or fix with clear commit messages
+3. **Test** locally and ensure no regressions
+4. **Document** any new endpoints or env variables
+5. **Open PR** with description, testing steps, and screenshots
 
 **Commit Message Format**:
 ```
@@ -609,5 +659,3 @@ docs(readme): update deployment instructions
 ---
 
 **Built with ❤️ for the Maintainly Team**
- 
- 
